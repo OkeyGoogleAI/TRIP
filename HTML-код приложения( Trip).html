@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор Бюджета Путешествия 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-card: #2c2c2c;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #ffffff;
+            --text-secondary: #a0a0a0;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border-radius: 16px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            max-height: 900px;
+        }
+
+        /* --- Left Panel: Settings --- */
+        .settings-panel {
+            background-color: var(--bg-panel);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .value-display {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background .15s ease-in-out;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Stepper */
+        .stepper {
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 4px;
+            width: fit-content;
+        }
+
+        .stepper-btn {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .stepper-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stepper-val {
+            width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Segmented Control */
+        .segmented-control {
+            display: flex;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .segmented-control input {
+            display: none;
+        }
+
+        .segmented-control label {
+            flex: 1;
+            text-align: center;
+            padding: 8px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            z-index: 2;
+            transition: color 0.3s;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .segmented-control input:checked + label {
+            color: #fff;
+        }
+
+        .glider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            width: calc(33.33% - 5px);
+            background: var(--primary);
+            border-radius: 6px;
+            transition: transform 0.3s ease;
+            z-index: 1;
+        }
+
+        #style-std:checked ~ .glider { transform: translateX(100%); width: calc(33.33% - 2px); }
+        #style-lux:checked ~ .glider { transform: translateX(204%); width: calc(33.33% - 4px); }
+
+        /* Toggle Switch & Checkbox Logic */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Custom Checkbox */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .custom-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #555;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .checkbox-container input { display: none; }
+        .checkbox-container input:checked + .custom-checkbox {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .checkbox-container input:checked + .custom-checkbox::after {
+            content: '✔';
+            font-size: 12px;
+            color: white;
+        }
+
+        .collapsible-content {
+            margin-top: 10px;
+            padding-left: 10px;
+            border-left: 2px solid #333;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .collapsible-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Right Panel: Results --- */
+        .results-panel {
+            background-color: var(--bg-panel);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .budget-bar-container {
+            width: 100%;
+        }
+
+        .bar-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .progress-bg {
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+        }
+
+        .progress-fill.warning { background: var(--danger); }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            overflow-y: auto;
+            padding-bottom: 10px;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .card.cheapest {
+            border-color: var(--success);
+        }
+
+        .card-img-container {
+            height: 140px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--success);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card-content {
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .card-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        
+        .card-price.over { color: var(--danger); }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; height: auto; max-height: none; }
+            .results-panel { min-height: 500px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- LEFT: Settings -->
+    <aside class="settings-panel">
+        <div class="header">
+            <h1>Бюджет Путешествия</h1>
+            <p>Данные: Гид по расходам 2026</p>
+        </div>
+
+        <!-- Budget -->
+        <div class="control-group">
+            <div class="label-row">
+                <span>Ваш бюджет</span>
+                <span class="value-display" id="budget-val">2000 €</span>
+            </div>
+            <input type="range" id="budget-range" min="500" max="10000" step="100" value="2000">
+        </div>
+
+        <!-- Days -->
+        <div class="control-group">
+            <div class="label-row">
+                <span>Дней</span>
+                <span class="value-display" id="days-val">7</span>
+            </div>
+            <input type="range" id="days-range" min="3" max="30" step="1" value="7">
+        </div>
+
+        <!-- People (Adults) -->
+        <div class="control-group">
+            <div class="label-row">
+                <span>Взрослые</span>
+            </div>
+            <div class="stepper">
+                <button class="stepper-btn" onclick="updatePeople(-1)">−</button>
+                <div class="stepper-val" id="people-val">2</div>
+                <button class="stepper-btn" onclick="updatePeople(1)">+</button>
+            </div>
+        </div>
+
+        <!-- Children Checkbox & Stepper -->
+        <div class="control-group">
+            <label class="checkbox-container">
+                <input type="checkbox" id="children-check" onchange="toggleChildren()">
+                <span class="custom-checkbox"></span>
+                Еду с детьми
+            </label>
+            
+            <div class="collapsible-content" id="children-controls">
+                <div class="label-row" style="margin-bottom: 5px;">
+                    <span style="font-size:12px;">Количество детей (50% цены)</span>
+                </div>
+                <div class="stepper">
+                    <button class="stepper-btn" onclick="updateChildren(-1)">−</button>
+                    <div class="stepper-val" id="children-val">1</div>
+                    <button class="stepper-btn" onclick="updateChildren(1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Style -->
+        <div class="control-group">
+            <div class="label-row"><span>Стиль поездки</span></div>
+            <div class="segmented-control">
+                <input type="radio" name="style" id="style-eco" value="economy" checked onchange="calculate()">
+                <label for="style-eco">Эконом</label>
+                
+                <input type="radio" name="style" id="style-std" value="standard" onchange="calculate()">
+                <label for="style-std">Стандарт</label>
+                
+                <input type="radio" name="style" id="style-lux" value="luxury" onchange="calculate()">
+                <label for="style-lux">Люкс</label>
+                
+                <div class="glider"></div>
+            </div>
+        </div>
+
+        <!-- Flight -->
+        <label class="checkbox-container">
+            <input type="checkbox" id="flight-check" onchange="calculate()">
+            <span class="custom-checkbox"></span>
+            Перелет (~200€ / чел)
+        </label>
+
+        <!-- Alcohol -->
+        <div class="control-group">
+            <div class="toggle-container" onclick="toggleAlcohol()">
+                <span style="font-size: 14px; font-weight:500;">Алкоголь (для взрослых)</span>
+                <label class="switch">
+                    <input type="checkbox" id="alcohol-check">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="collapsible-content" id="alcohol-controls">
+                <div class="label-row" style="margin-bottom: 5px;">
+                    <span style="font-size:12px;">Бокалов в день (на чел.)</span>
+                    <span class="value-display" id="drinks-val" style="font-size:12px;">2</span>
+                </div>
+                <input type="range" id="drinks-range" min="1" max="10" value="2" oninput="updateDrinksVal()">
+            </div>
+        </div>
+    </aside>
+
+    <!-- RIGHT: Results -->
+    <main class="results-panel">
+        <div class="budget-bar-container">
+            <div class="bar-labels">
+                <span id="status-text">В рамках бюджета</span>
+                <span id="percent-text">0%</span>
+            </div>
+            <div class="progress-bg">
+                <div class="progress-fill" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="cards-grid" id="cards-container">
+            <!-- Cards will be injected via JS -->
+        </div>
+    </main>
+</div>
+
+<script>
+    // Data Parsed from "Гид по расходам: Франция, Италия и Португалия 2026"
+    // Values: Rent Center / Rent Out / Beer / Wine / Meal Cheap / Transport
+    const countryData = [
+        {
+            name: "Франция",
+            img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80",
+            rentCenter: 25.82,
+            rentOut: 20.02,
+            beer: 6.00,
+            food: 15.00,
+            transport: 1.90,
+            description: "Романтика, но дорогое вино и транспорт."
+        },
+        {
+            name: "Италия",
+            img: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=600&q=80",
+            rentCenter: 24.12,
+            rentOut: 19.00,
+            beer: 5.00,
+            food: 16.00,
+            transport: 1.70,
+            description: "Баланс цены. Самое дешевое жилье."
+        },
+        {
+            name: "Португалия",
+            img: "https://images.unsplash.com/photo-1555881400-74d7acaacd81?auto=format&fit=crop&w=600&q=80",
+            rentCenter: 29.87,
+            rentOut: 23.47,
+            beer: 2.50,
+            food: 11.00,
+            transport: 2.00,
+            description: "Дорогое жилье, но еда и алкоголь — копейки."
+        }
+    ];
+
+    // State
+    let state = {
+        budget: 2000,
+        days: 7,
+        people: 2, // Adults
+        hasChildren: false,
+        children: 1,
+        style: 'economy',
+        flight: false,
+        alcohol: false,
+        drinks: 2
+    };
+
+    // Elements
+    const elBudgetVal = document.getElementById('budget-val');
+    const elDaysVal = document.getElementById('days-val');
+    const elPeopleVal = document.getElementById('people-val');
+    const elChildrenVal = document.getElementById('children-val');
+    const elChildrenControls = document.getElementById('children-controls');
+    const elDrinksVal = document.getElementById('drinks-val');
+    const elAlcoholControls = document.getElementById('alcohol-controls');
+    const elProgressBar = document.getElementById('progress-bar');
+    const elPercentText = document.getElementById('percent-text');
+    const elStatusText = document.getElementById('status-text');
+    const elCardsContainer = document.getElementById('cards-container');
+
+    // Init Listeners
+    document.getElementById('budget-range').addEventListener('input', (e) => {
+        state.budget = parseInt(e.target.value);
+        elBudgetVal.textContent = state.budget + ' €';
+        calculate();
+    });
+
+    document.getElementById('days-range').addEventListener('input', (e) => {
+        state.days = parseInt(e.target.value);
+        elDaysVal.textContent = state.days;
+        calculate();
+    });
+
+    document.getElementById('drinks-range').addEventListener('input', (e) => {
+        updateDrinksVal();
+    });
+
+    function updatePeople(delta) {
+        let newVal = state.people + delta;
+        if(newVal < 1) newVal = 1;
+        state.people = newVal;
+        elPeopleVal.textContent = state.people;
+        calculate();
+    }
+
+    function toggleChildren() {
+        const checkbox = document.getElementById('children-check');
+        state.hasChildren = checkbox.checked;
+        
+        if (state.hasChildren) {
+            elChildrenControls.classList.add('active');
+        } else {
+            elChildrenControls.classList.remove('active');
+        }
+        calculate();
+    }
+
+    function updateChildren(delta) {
+        let newVal = state.children + delta;
+        if(newVal < 1) newVal = 1;
+        state.children = newVal;
+        elChildrenVal.textContent = state.children;
+        calculate();
+    }
+
+    function toggleAlcohol() {
+        const checkbox = document.getElementById('alcohol-check');
+        checkbox.checked = !checkbox.checked; // toggle visually
+        state.alcohol = checkbox.checked;
+        
+        if (state.alcohol) {
+            elAlcoholControls.classList.add('active');
+        } else {
+            elAlcoholControls.classList.remove('active');
+        }
+        calculate();
+    }
+
+    function updateDrinksVal() {
+        const val = document.getElementById('drinks-range').value;
+        state.drinks = parseInt(val);
+        elDrinksVal.textContent = state.drinks;
+        calculate();
+    }
+
+    function calculate() {
+        // Update styling state from DOM inputs that have standard onChange
+        state.style = document.querySelector('input[name="style"]:checked').value;
+        state.flight = document.getElementById('flight-check').checked;
+
+        // Calculate "Effective People" for General Costs (Food, Transport, Rent)
+        // Adult = 1, Child = 0.5
+        const childrenCount = state.hasChildren ? state.children : 0;
+        const effectivePeople = state.people + (childrenCount * 0.5);
+
+        let results = countryData.map(country => {
+            let dailyBaseCostPerAdult = 0;
+            
+            // Logic based on Style (Per Adult Base)
+            if (state.style === 'economy') {
+                // Rent: Assuming price is per person sharing.
+                // Note: Original data was Rent/Day for apartment. 
+                // We assume the per-person cost scales. 
+                // E.g. RentOut / 2 (sharing) is base per adult.
+                // Child adds 50% of that base cost.
+                let baseRent = country.rentOut / 2; // Base cost for 1 adult in shared mode
+                dailyBaseCostPerAdult += baseRent;
+                dailyBaseCostPerAdult += country.food * 1.5; 
+                dailyBaseCostPerAdult += country.transport * 2; 
+
+            } else if (state.style === 'standard') {
+                let baseRent = country.rentCenter / 2;
+                dailyBaseCostPerAdult += baseRent;
+                dailyBaseCostPerAdult += country.food * 2.2;
+                dailyBaseCostPerAdult += country.transport * 4;
+
+            } else { // Luxury
+                let baseRent = (country.rentCenter * 1.5) / 2;
+                dailyBaseCostPerAdult += baseRent;
+                dailyBaseCostPerAdult += country.food * 3.5;
+                dailyBaseCostPerAdult += country.transport * 10;
+            }
+
+            // 1. Core Costs (Rent + Food + Transport) scaled by Effective People
+            let coreTotal = dailyBaseCostPerAdult * state.days * effectivePeople;
+
+            // 2. Alcohol (Only for Adults)
+            let alcoholTotal = 0;
+            if (state.alcohol) {
+                // Cost per adult * number of adults * days
+                alcoholTotal = (country.beer * state.drinks) * state.people * state.days;
+            }
+
+            // 3. Flight (Fixed 200e per adult, 100e per child)
+            let flightTotal = 0;
+            if (state.flight) {
+                flightTotal = (200 * effectivePeople); // effectivePeople handles the 0.5 logic perfectly here
+            }
+
+            let total = coreTotal + alcoholTotal + flightTotal;
+
+            return { ...country, total: Math.round(total) };
+        });
+
+        render(results, childrenCount);
+    }
+
+    function render(results, childCount) {
+        elCardsContainer.innerHTML = '';
+        
+        const minCost = Math.min(...results.map(r => r.total));
+        const percent = Math.min((minCost / state.budget) * 100, 100);
+        
+        elProgressBar.style.width = `${percent}%`;
+        elPercentText.textContent = `${Math.round((minCost / state.budget) * 100)}%`;
+
+        if (minCost > state.budget) {
+            elProgressBar.classList.add('warning');
+            elStatusText.textContent = "Бюджет превышен (мин. вариант)";
+            elStatusText.style.color = "var(--danger)";
+        } else {
+            elProgressBar.classList.remove('warning');
+            elStatusText.textContent = "Минимальные расходы в рамках бюджета";
+            elStatusText.style.color = "var(--text-secondary)";
+        }
+
+        results.forEach(res => {
+            const isCheapest = res.total === minCost;
+            const isOver = res.total > state.budget;
+
+            const card = document.createElement('div');
+            card.className = `card ${isCheapest ? 'cheapest' : ''}`;
+            
+            let peopleStr = `${state.people} взр.`;
+            if (childCount > 0) peopleStr += ` + ${childCount} дет.`;
+
+            card.innerHTML = `
+                <div class="card-img-container">
+                    <img src="${res.img}" class="card-img" alt="${res.name}">
+                    ${isCheapest ? '<div class="badge">Самый выгодный</div>' : ''}
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-title">${res.name}</div>
+                        <div class="card-desc">${res.description}</div>
+                        <div style="font-size:12px; color:#777;">
+                            ${state.style === 'economy' ? 'Эконом' : state.style === 'standard' ? 'Стандарт' : 'Люкс'} • ${peopleStr} • ${state.days} дн.
+                        </div>
+                    </div>
+                    <div class="card-price ${isOver ? 'over' : ''}">${res.total} €</div>
+                </div>
+            `;
+            elCardsContainer.appendChild(card);
+        });
+    }
+
+    // Initial render
+    calculate();
+
+</script>
+</body>
+</html>
